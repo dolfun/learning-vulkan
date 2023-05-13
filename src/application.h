@@ -18,8 +18,21 @@ public:
     ~Application();
 
 private:
-    GLFWwindow* window;
+    // Initializing glfw
     void init_glfw();
+    GLFWwindow* window;
+
+    // Initializing vulkan
+    void init_vulkan();
+
+    // Instance creation
+    void create_instance();
+    void check_validation_layer_support();
+    VkInstance instance;
+
+    // Debug messenger
+    void setup_debug_messenger();
+    VkDebugUtilsMessengerEXT debug_messenger;
 };
 
 #endif
