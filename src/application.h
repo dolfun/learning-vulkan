@@ -4,6 +4,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <vector>
+
 class Application {
 public:
     Application();
@@ -33,6 +35,10 @@ private:
     // Debug messenger
     void setup_debug_messenger();
     VkDebugUtilsMessengerEXT debug_messenger;
+
+    // Physical device
+    void select_physical_device();
+    VkPhysicalDevice physical_device = VK_NULL_HANDLE;
 };
 
 #endif

@@ -1,5 +1,6 @@
 #include "application.h"
 #include "debug_messenger.h"
+#include "device_utils.h"
 
 #include <iostream>
 #include <vector>
@@ -57,6 +58,7 @@ void Application::init_glfw() {
 void Application::init_vulkan() {
     create_instance();
     setup_debug_messenger();
+    select_physical_device();
 }
 
 void Application::create_instance() {
@@ -183,3 +185,23 @@ void Application::setup_debug_messenger() {
         throw std::runtime_error("Failed to set up debug messenger.");
     }
 }
+
+void Application::select_physical_device() {
+    uint32_t device_count = 0;
+    vkEnumeratePhysicalDevices(instance, &device_count, nullptr);
+    if (device_count == 0) {
+        throw std::runtime_error("Failed to find GPUs with Vulkan support.");
+    }
+    std::vector<VkPhysicalDevice> devices(device_count);
+    vkEnumeratePhysicalDevices(instance, &device_count, devices.data());
+
+    sort_physical_devices(devices);
+
+    std::cout << "Found " << device_count << " GPU(s) with vulkan support:\n";
+    for (const auto& device : devices) {
+        print_physical_device_info(device);
+    }
+
+    physical_device = devices.front();
+}
+

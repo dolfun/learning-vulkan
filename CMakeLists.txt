@@ -5,6 +5,10 @@ find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(Vulkan REQUIRED)
 
-add_executable(main src/main.cc src/application.h src/application.cc src/debug_messenger.h)
+add_executable(main 
+                src/main.cc
+                src/application.h src/application.cc
+                src/debug_messenger.h
+                src/device_utils.h)
 target_link_libraries(main PRIVATE glfw Vulkan::Vulkan)
 target_compile_features(main PRIVATE cxx_std_17)
