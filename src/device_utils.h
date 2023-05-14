@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <iomanip>
 
+#include "application.h"
+
 #define PREFERRED_DEVICE_TYPE VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
 
 uint64_t get_device_dedicated_vram_size(const VkPhysicalDevice& device) {
@@ -49,6 +51,11 @@ void print_physical_device_info(const VkPhysicalDevice& device) {
 }
 
 bool is_suitable_device(const VkPhysicalDevice& device) {
+    bool flag = true;
+
+    auto indices = find_queue_families(device);
+    flag &= indices.is_complete();
+
     return true;
 }
 

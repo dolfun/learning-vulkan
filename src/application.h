@@ -4,7 +4,17 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
-#include <vector>
+#include <optional>
+
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphics_family;
+
+    bool is_complete() {
+        return graphics_family.has_value();
+    }
+};
+
+
 
 class Application {
 public:
@@ -40,5 +50,8 @@ private:
     void select_physical_device();
     VkPhysicalDevice physical_device = VK_NULL_HANDLE;
 };
+
+QueueFamilyIndices find_queue_families(VkPhysicalDevice);
+
 
 #endif
