@@ -12,3 +12,9 @@ add_executable(main
                 src/utility.h)
 target_link_libraries(main PRIVATE glfw Vulkan::Vulkan)
 target_compile_features(main PRIVATE cxx_std_17)
+
+if(MSVC)
+  target_compile_options(main PRIVATE /W4 /WX)
+else()
+  target_compile_options(main PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
