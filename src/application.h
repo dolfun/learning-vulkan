@@ -90,10 +90,14 @@ private:
 
     // Swapchain
     void create_swap_chain();
-    VkSurfaceFormatKHR surface_format;
-    VkExtent2D extent;
+    VkFormat swap_chain_image_format;
+    VkExtent2D swap_chain_extent;
     std::vector<VkImage> swap_chain_images;
     VkSwapchainKHR swap_chain;
+
+    // Image views
+    void create_image_views();
+    std::vector<VkImageView> swap_chain_image_views;
 };
 
 #endif
