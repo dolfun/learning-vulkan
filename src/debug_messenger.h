@@ -14,6 +14,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
         std::cerr << "[[" << pCallbackData->pMessageIdName << "]] " << pCallbackData->pMessage << std::endl;
     }
 
+    (void)messageType;
+    (void)pUserData;
 
     return VK_FALSE;
 }
