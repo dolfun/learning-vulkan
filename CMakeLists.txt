@@ -9,6 +9,6 @@ add_executable(main
                 src/main.cc
                 src/application.h src/application.cc
                 src/debug_messenger.h
-                src/device_utils.h)
+                src/utility.h)
 target_link_libraries(main PRIVATE glfw Vulkan::Vulkan)
 target_compile_features(main PRIVATE cxx_std_17)
