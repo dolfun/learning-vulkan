@@ -214,29 +214,29 @@ void Application::select_physical_device() {
     sort_physical_devices(devices);
 
     std::cout << "Found " << device_count << " GPU(s) with vulkan support:\n";
-    for (const auto& device : devices) {
-        print_physical_device_info(device, (device == devices.front()));
+    for (const auto& _device : devices) {
+        print_physical_device_info(_device, (_device == devices.front()));
     }
 
     physical_device = devices.front();
 }
 
-QueueFamilyIndices Application::find_queue_families(VkPhysicalDevice device) {
+QueueFamilyIndices Application::find_queue_families(VkPhysicalDevice _device) {
     QueueFamilyIndices indices;
 
     uint32_t queue_family_count = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, nullptr);
+    vkGetPhysicalDeviceQueueFamilyProperties(_device, &queue_family_count, nullptr);
     std::vector<VkQueueFamilyProperties> queue_families(queue_family_count);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queue_family_count, queue_families.data());
+    vkGetPhysicalDeviceQueueFamilyProperties(_device, &queue_family_count, queue_families.data());
 
     int i = 0;
     for (const auto& queue_family : queue_families) {
-        if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) { 
             indices.graphics_family = i;
         }
 
         VkBool32 present_support = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &present_support);
+        vkGetPhysicalDeviceSurfaceSupportKHR(_device, i, surface, &present_support);
         if (present_support) {
             indices.present_family = i;
         }
