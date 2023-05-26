@@ -98,6 +98,10 @@ private:
     // Image views
     void create_image_views();
     std::vector<VkImageView> swap_chain_image_views;
+
+    // Graphics pipeline
+    void create_graphics_pipeline();
+    VkShaderModule create_shader_module(const std::vector<char>&);
 };
 
 #endif

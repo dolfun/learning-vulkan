@@ -69,6 +69,7 @@ void Application::init_vulkan() {
     create_logical_device();
     create_swap_chain();
     create_image_views();
+    create_graphics_pipeline();
 }
 
 void Application::create_instance() {
@@ -391,4 +392,34 @@ void Application::create_image_views() {
             throw std::runtime_error("Failed to create image views.");
         }
     }
+}
+
+void Application::create_graphics_pipeline() {
+    auto vert_shader_code = read_file("shaders/shader_vert.spv");
+    auto frag_shader_code = read_file("shaders/shader_frag.spv");
+
+    auto vert_shader_module = create_shader_module(vert_shader_code);
+    auto frag_shader_module = create_shader_module(frag_shader_code);
+
+    vkDestroyShaderModule(device, frag_shader_module, nullptr);
+    vkDestroyShaderModule(device, vert_shader_module, nullptr);
+
+    VkPipelineShaderStageCreateInfo vert_shader_stage_create_info{};
+    vert_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vert_shader_stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vert_shader_stage_create_info.module = vert_shader_module;
+    vert_shader_stage_create_info.pName = "main";
+
+    VkPipelineShaderStageCreateInfo frag_shader_stage_create_info{};
+    frag_shader_stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    frag_shader_stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    frag_shader_stage_create_info.module = frag_shader_module;
+    frag_shader_stage_create_info.pName = "main";
+
+    VkPipelineShaderStageCreateInfo shader_stages[] = {
+        vert_shader_stage_create_info,
+        frag_shader_stage_create_info,
+    };
+
+    (void)shader_stages;
 }
