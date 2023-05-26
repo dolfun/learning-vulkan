@@ -99,9 +99,15 @@ private:
     void create_image_views();
     std::vector<VkImageView> swap_chain_image_views;
 
+    // Render pass
+    void create_render_pass();
+    VkRenderPass render_pass;
+
     // Graphics pipeline
     void create_graphics_pipeline();
     VkShaderModule create_shader_module(const std::vector<char>&);
+    VkPipelineLayout pipeline_layout;
+    VkPipeline graphics_pipeline;
 };
 
 #endif
