@@ -30,11 +30,15 @@ void Application::run() {
 }
 
 Application::~Application() {
+    for (auto& frambuffer : swap_chain_framebuffers) {
+        vkDestroyFramebuffer(device, frambuffer, nullptr);
+    }
+
     vkDestroyPipeline(device, graphics_pipeline, nullptr);
     vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
     vkDestroyRenderPass(device, render_pass, nullptr);
 
-    for (auto image_view : swap_chain_image_views) {
+    for (auto& image_view : swap_chain_image_views) {
         vkDestroyImageView(device, image_view, nullptr);
     }
 
@@ -75,6 +79,7 @@ void Application::init_vulkan() {
     create_image_views();
     create_render_pass();
     create_graphics_pipeline();
+    create_framebuffers();
 }
 
 void Application::create_instance() {
@@ -539,4 +544,27 @@ void Application::create_graphics_pipeline() {
 
     vkDestroyShaderModule(device, frag_shader_module, nullptr);
     vkDestroyShaderModule(device, vert_shader_module, nullptr);
+}
+
+void Application::create_framebuffers() {
+    swap_chain_framebuffers.resize(swap_chain_image_views.size());
+
+    for (size_t i = 0; i < swap_chain_image_views.size(); ++i) {
+        VkImageView attachments[] = {
+            swap_chain_image_views[i],
+        };
+
+        VkFramebufferCreateInfo create_info{};
+        create_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        create_info.renderPass = render_pass;
+        create_info.attachmentCount = 1;
+        create_info.pAttachments = attachments;
+        create_info.width = swap_chain_extent.width;
+        create_info.height = swap_chain_extent.height;
+        create_info.layers = 1;
+
+        if (vkCreateFramebuffer(device, &create_info, nullptr, &swap_chain_framebuffers[i]) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create framebuffer.");
+        }
+    }
 }

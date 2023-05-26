@@ -108,6 +108,10 @@ private:
     VkShaderModule create_shader_module(const std::vector<char>&);
     VkPipelineLayout pipeline_layout;
     VkPipeline graphics_pipeline;
+
+    // Framebuffers
+    void create_framebuffers();
+    std::vector<VkFramebuffer> swap_chain_framebuffers;
 };
 
 #endif
