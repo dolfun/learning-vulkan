@@ -118,18 +118,19 @@ private:
     VkCommandPool command_pool;
 
     // Command buffer
-    void create_command_buffer();
+    void create_command_buffers();
     void record_command_buffer(VkCommandBuffer, uint32_t);
-    VkCommandBuffer command_buffer;
+    std::vector<VkCommandBuffer> command_buffers;
 
     // Synchronization objects
     void create_sync_objects();
-    VkSemaphore image_available_semaphore;
-    VkSemaphore render_finished_semaphore;
-    VkFence in_flight_fence;
+    std::vector<VkSemaphore> image_available_semaphores;
+    std::vector<VkSemaphore> render_finished_semaphores;
+    std::vector<VkFence> in_flight_fences;
 
     // Drawing
     void draw_frame();
+    uint32_t current_frame = 0;
 };
 
 #endif
