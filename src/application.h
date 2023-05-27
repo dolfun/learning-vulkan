@@ -112,6 +112,15 @@ private:
     // Framebuffers
     void create_framebuffers();
     std::vector<VkFramebuffer> swap_chain_framebuffers;
+
+    // Command pool
+    void create_command_pool();
+    VkCommandPool command_pool;
+
+    // Command buffer
+    void create_command_buffer();
+    void record_command_buffer(VkCommandBuffer, uint32_t);
+    VkCommandBuffer command_buffer;
 };
 
 #endif
