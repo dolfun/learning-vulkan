@@ -121,6 +121,15 @@ private:
     void create_command_buffer();
     void record_command_buffer(VkCommandBuffer, uint32_t);
     VkCommandBuffer command_buffer;
+
+    // Synchronization objects
+    void create_sync_objects();
+    VkSemaphore image_available_semaphore;
+    VkSemaphore render_finished_semaphore;
+    VkFence in_flight_fence;
+
+    // Drawing
+    void draw_frame();
 };
 
 #endif
