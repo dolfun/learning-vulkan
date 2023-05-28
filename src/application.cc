@@ -41,7 +41,6 @@ Application::~Application() {
         vkDestroySemaphore(device, render_finished_semaphores[i], nullptr);
         vkDestroyFence(device, in_flight_fences[i], nullptr);
     }
-    
     vkDestroyCommandPool(device, command_pool, nullptr);
 
     for (auto& frambuffer : swap_chain_framebuffers) {
@@ -57,6 +56,8 @@ Application::~Application() {
     }
 
     vkDestroySwapchainKHR(device, swap_chain, nullptr);
+    vkDestroyBuffer(device, vertex_buffer, nullptr);
+    vkFreeMemory(device, vertex_buffer_memory, nullptr);
     vkDestroyDevice(device, nullptr);
 
     if (enable_validation_layers) {
@@ -94,6 +95,7 @@ void Application::init_vulkan() {
     create_render_pass();
     create_graphics_pipeline();
     create_framebuffers();
+    create_vertex_buffer();
     create_command_pool();
     create_command_buffers();
     create_sync_objects();
@@ -489,10 +491,12 @@ void Application::create_graphics_pipeline() {
 
     VkPipelineVertexInputStateCreateInfo vertex_input_create_info{};
     vertex_input_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertex_input_create_info.vertexBindingDescriptionCount = 0;
-    vertex_input_create_info.pVertexBindingDescriptions = nullptr;
-    vertex_input_create_info.vertexAttributeDescriptionCount = 0;
-    vertex_input_create_info.pVertexAttributeDescriptions = nullptr;
+    auto binding_descriptions = Vertex::get_binding_description();
+    auto attribute_descriptions = Vertex::get_attribute_description();
+    vertex_input_create_info.vertexBindingDescriptionCount = 1;
+    vertex_input_create_info.pVertexBindingDescriptions = &binding_descriptions;
+    vertex_input_create_info.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size());
+    vertex_input_create_info.pVertexAttributeDescriptions = attribute_descriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info{};
     input_assembly_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -596,6 +600,37 @@ void Application::create_framebuffers() {
     }
 }
 
+void Application::create_vertex_buffer() {
+    VkBufferCreateInfo buffer_create_info{};
+    buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_create_info.size = sizeof(vertices[0]) * vertices.size();
+    buffer_create_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(device, &buffer_create_info, nullptr, &vertex_buffer) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to create vertex buffer.");
+    }
+
+    VkMemoryRequirements memory_requirements;
+    vkGetBufferMemoryRequirements(device, vertex_buffer, &memory_requirements);
+    
+    VkMemoryAllocateInfo memory_allocate_info{};
+    memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    memory_allocate_info.allocationSize = memory_requirements.size;
+    memory_allocate_info.memoryTypeIndex = find_memory_type(memory_requirements.memoryTypeBits, 
+                                                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    
+    if (vkAllocateMemory(device, &memory_allocate_info, nullptr, &vertex_buffer_memory) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to allocate vertex buffer memory.");
+    }
+    vkBindBufferMemory(device, vertex_buffer, vertex_buffer_memory, 0);
+
+    void* data;
+    vkMapMemory(device, vertex_buffer_memory, 0, buffer_create_info.size, 0, &data);
+    memcpy(data, vertices.data(), buffer_create_info.size);
+    vkUnmapMemory(device, vertex_buffer_memory);
+}
+
 void Application::create_command_pool() {
     auto queue_family_indices = find_queue_families(physical_device);
 
@@ -679,7 +714,11 @@ void Application::record_command_buffer(VkCommandBuffer _command_buffer, uint32_
     scissor.extent = swap_chain_extent;
     vkCmdSetScissor(_command_buffer, 0, 1, &scissor);
 
-    vkCmdDraw(_command_buffer, 3, 1, 0, 0);
+    VkBuffer vertex_buffers[] = {vertex_buffer};
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(_command_buffer, 0, 1, vertex_buffers, offsets);
+
+    vkCmdDraw(_command_buffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
     vkCmdEndRenderPass(_command_buffer);
 

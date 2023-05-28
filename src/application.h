@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include <vector>
+#include <array>
 #include <optional>
 
 const std::vector<const char*> requested_layers = {
@@ -54,7 +55,7 @@ private:
     // Instance creation
     void create_instance();
     void check_validation_layer_support();
-    VkInstance instance;
+    VkInstance instance;                                                                                                                                                                                                                                                                                                                                                                                                                                          
 
     // Debug messenger
     void setup_debug_messenger();
@@ -112,6 +113,12 @@ private:
     // Framebuffers
     void create_framebuffers();
     std::vector<VkFramebuffer> swap_chain_framebuffers;
+
+    // Vertex buffer
+    uint32_t find_memory_type(uint32_t, VkMemoryPropertyFlags);
+    void create_vertex_buffer();
+    VkBuffer vertex_buffer;
+    VkDeviceMemory vertex_buffer_memory;
 
     // Command pool
     void create_command_pool();

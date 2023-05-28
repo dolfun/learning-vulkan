@@ -2,6 +2,7 @@
 #define UTILITY_H_INCLUDED
 
 #include <vulkan/vulkan.h>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <fstream>
 #include <algorithm>
@@ -11,6 +12,42 @@
 #include "application.h"
 
 #define PREFERRED_DEVICE_TYPE VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+
+struct Vertex {
+    glm::vec2 pos;
+    glm::vec3 color;
+
+    static auto get_binding_description() {
+        VkVertexInputBindingDescription binding_description{};
+        binding_description.binding = 0;
+        binding_description.stride = sizeof(Vertex);
+        binding_description.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+        return binding_description;
+    }
+
+    static auto get_attribute_description() {
+        std::array<VkVertexInputAttributeDescription, 2> attribute_descriptions;
+
+        attribute_descriptions[0].binding = 0;
+        attribute_descriptions[0].location = 0;
+        attribute_descriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+        attribute_descriptions[0].offset = offsetof(Vertex, pos);
+
+        attribute_descriptions[1].binding = 0;
+        attribute_descriptions[1].location = 1;
+        attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attribute_descriptions[1].offset = offsetof(Vertex, color);
+
+        return attribute_descriptions;
+    }
+};
+
+const std::vector<Vertex> vertices = {
+    {{ 0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{ 0.5f,  0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{-0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}}
+};
 
 uint64_t get_device_dedicated_vram_size(const VkPhysicalDevice& device) {
     VkPhysicalDeviceMemoryProperties memory_properties;
@@ -212,6 +249,20 @@ VkShaderModule Application::create_shader_module(const std::vector<char>& code) 
     }
 
     return shader_module;
+}
+
+uint32_t Application::find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memory_properties;
+    vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
+    
+    for (uint32_t i = 0; i < memory_properties.memoryTypeCount; ++i) {
+        if ((type_filter & (1 << i)) && 
+            (memory_properties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("Failed to find suitable memory type.");
 }
 
 #endif
