@@ -49,6 +49,11 @@ const std::vector<Vertex> vertices = {
     {{-0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}}
 };
 
+template<typename T>
+size_t get_vector_data_size(const std::vector<T>& vec) {
+    return vec.size() * sizeof(T);
+}
+
 uint64_t get_device_dedicated_vram_size(const VkPhysicalDevice& device) {
     VkPhysicalDeviceMemoryProperties memory_properties;
     vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);

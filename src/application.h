@@ -123,6 +123,8 @@ private:
 
     // Vertex buffer
     uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags);
+    void create_buffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags, VkBuffer&, VkDeviceMemory&);
+    void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
     void create_vertex_buffer();
     VkBuffer vertex_buffer;
     VkDeviceMemory vertex_buffer_memory;

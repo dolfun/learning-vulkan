@@ -40,8 +40,10 @@ Application::~Application() {
 
     vkDestroyPipeline(device, graphics_pipeline, nullptr);
     vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
-
     vkDestroyRenderPass(device, render_pass, nullptr);
+
+    vkDestroyBuffer(device, vertex_buffer, nullptr);
+    vkFreeMemory(device, vertex_buffer_memory, nullptr);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
         vkDestroySemaphore(device, image_available_semaphores[i], nullptr);
@@ -50,9 +52,6 @@ Application::~Application() {
     }
     
     vkDestroyCommandPool(device, command_pool, nullptr);
-
-    vkDestroyBuffer(device, vertex_buffer, nullptr);
-    vkFreeMemory(device, vertex_buffer_memory, nullptr);
 
     vkDestroyDevice(device, nullptr);
 
@@ -110,8 +109,8 @@ void Application::init_vulkan() {
     create_render_pass();
     create_graphics_pipeline();
     create_framebuffers();
-    create_vertex_buffer();
     create_command_pool();
+    create_vertex_buffer();
     create_command_buffers();
     create_sync_objects();
 }
@@ -644,35 +643,86 @@ void Application::create_framebuffers() {
     }
 }
 
-void Application::create_vertex_buffer() {
+void Application::create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+                                VkBuffer& buffer, VkDeviceMemory& buffer_memory) {
     VkBufferCreateInfo buffer_create_info{};
     buffer_create_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    buffer_create_info.size = sizeof(vertices[0]) * vertices.size();
-    buffer_create_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    buffer_create_info.size = size;
+    buffer_create_info.usage = usage;
     buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(device, &buffer_create_info, nullptr, &vertex_buffer) != VK_SUCCESS) {
+    if (vkCreateBuffer(device, &buffer_create_info, nullptr, &buffer) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create vertex buffer.");
     }
 
     VkMemoryRequirements memory_requirements;
-    vkGetBufferMemoryRequirements(device, vertex_buffer, &memory_requirements);
+    vkGetBufferMemoryRequirements(device, buffer, &memory_requirements);
     
     VkMemoryAllocateInfo memory_allocate_info{};
     memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     memory_allocate_info.allocationSize = memory_requirements.size;
-    memory_allocate_info.memoryTypeIndex = find_memory_type(memory_requirements.memoryTypeBits, 
-                                                            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    memory_allocate_info.memoryTypeIndex = find_memory_type(memory_requirements.memoryTypeBits, properties);
     
-    if (vkAllocateMemory(device, &memory_allocate_info, nullptr, &vertex_buffer_memory) != VK_SUCCESS) {
+    if (vkAllocateMemory(device, &memory_allocate_info, nullptr, &buffer_memory) != VK_SUCCESS) {
         throw std::runtime_error("Failed to allocate vertex buffer memory.");
     }
-    vkBindBufferMemory(device, vertex_buffer, vertex_buffer_memory, 0);
+    vkBindBufferMemory(device, buffer, buffer_memory, 0);
+}
 
+void Application::copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size) {
+    VkCommandBufferAllocateInfo command_buffer_allocate_info{};
+    command_buffer_allocate_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    command_buffer_allocate_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    command_buffer_allocate_info.commandPool = command_pool;
+    command_buffer_allocate_info.commandBufferCount = 1;
+
+    VkCommandBuffer command_buffer;
+    vkAllocateCommandBuffers(device, &command_buffer_allocate_info, &command_buffer);
+
+    VkCommandBufferBeginInfo command_buffer_begin_info{};
+    command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info);
+
+    VkBufferCopy copy_region{};
+    copy_region.size = size;
+    vkCmdCopyBuffer(command_buffer, src_buffer, dst_buffer, 1, &copy_region);
+
+    vkEndCommandBuffer(command_buffer);
+
+    VkSubmitInfo submit_info{};
+    submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers = &command_buffer;
+
+    vkQueueSubmit(graphics_queue, 1, &submit_info, VK_NULL_HANDLE);
+    vkQueueWaitIdle(graphics_queue);
+
+    vkFreeCommandBuffers(device, command_pool, 1, &command_buffer);
+}
+
+void Application::create_vertex_buffer() {
+    VkDeviceSize buffer_size = get_vector_data_size(vertices);
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_buffer_memmory;
+
+    create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 staging_buffer, staging_buffer_memmory);
+    
     void* data;
-    vkMapMemory(device, vertex_buffer_memory, 0, buffer_create_info.size, 0, &data);
-    memcpy(data, vertices.data(), buffer_create_info.size);
-    vkUnmapMemory(device, vertex_buffer_memory);
+    vkMapMemory(device, staging_buffer_memmory, 0, buffer_size, 0, &data);
+        memcpy(data, vertices.data(), buffer_size);
+    vkUnmapMemory(device, staging_buffer_memmory);
+
+    create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertex_buffer, vertex_buffer_memory);
+
+    copy_buffer(staging_buffer, vertex_buffer, buffer_size);
+
+    vkDestroyBuffer(device, staging_buffer, nullptr);
+    vkFreeMemory(device, staging_buffer_memmory, nullptr);
 }
 
 void Application::create_command_pool() {
