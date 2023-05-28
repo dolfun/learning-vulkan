@@ -49,6 +49,10 @@ private:
     void init_glfw();
     GLFWwindow* window;
 
+    // Callbacks
+    static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void framebuffer_resize_callback(GLFWwindow* window, int width, int height);
+
     // Initializing vulkan
     void init_vulkan();
 
@@ -91,10 +95,13 @@ private:
 
     // Swapchain
     void create_swap_chain();
+    void recreate_swap_chain();
+    void cleanup_swap_chain();
     VkFormat swap_chain_image_format;
     VkExtent2D swap_chain_extent;
     std::vector<VkImage> swap_chain_images;
     VkSwapchainKHR swap_chain;
+    bool framebuffer_resized = false;
 
     // Image views
     void create_image_views();
@@ -115,7 +122,7 @@ private:
     std::vector<VkFramebuffer> swap_chain_framebuffers;
 
     // Vertex buffer
-    uint32_t find_memory_type(uint32_t, VkMemoryPropertyFlags);
+    uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags);
     void create_vertex_buffer();
     VkBuffer vertex_buffer;
     VkDeviceMemory vertex_buffer_memory;
@@ -126,7 +133,7 @@ private:
 
     // Command buffer
     void create_command_buffers();
-    void record_command_buffer(VkCommandBuffer, uint32_t);
+    void record_command_buffer(VkCommandBuffer, uint32_t image_index);
     std::vector<VkCommandBuffer> command_buffers;
 
     // Synchronization objects
