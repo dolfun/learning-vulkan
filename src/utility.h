@@ -43,6 +43,12 @@ struct Vertex {
     }
 };
 
+struct UniformBufferObject {
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 projection;
+};
+
 template<typename T>
 size_t get_vector_data_size(const std::vector<T>& vec) {
     return vec.size() * sizeof(T);

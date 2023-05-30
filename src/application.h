@@ -111,6 +111,10 @@ private:
     void create_render_pass();
     VkRenderPass render_pass;
 
+    // Descriptor set layout
+    void create_descriptor_set_layout();
+    VkDescriptorSetLayout descriptor_set_layout;
+
     // Graphics pipeline
     void create_graphics_pipeline();
     VkShaderModule create_shader_module(const std::vector<char>&);
@@ -127,10 +131,22 @@ private:
     void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
     void create_vertex_buffer();
     void create_index_buffer();
+    void create_uniform_buffers();
     VkBuffer vertex_buffer;
     VkDeviceMemory vertex_buffer_memory;
     VkBuffer index_buffer;
     VkDeviceMemory index_buffer_memory;
+    std::vector<VkBuffer> uniform_buffers;
+    std::vector<VkDeviceMemory> uniform_buffers_memory;
+    std::vector<void*> uniform_buffers_pointers;
+
+    // Decriptor pool
+    void create_descriptor_pool();
+    VkDescriptorPool descriptor_pool;
+
+    // Descriptor sets
+    void create_descriptor_sets();
+    std::vector<VkDescriptorSet> descriptor_sets;
 
     // Command pool
     void create_command_pool();
@@ -149,7 +165,9 @@ private:
 
     // Drawing
     void draw_frame();
+    void update_uniform_buffer(uint32_t);
     uint32_t current_frame = 0;
+    float time;
 };
 
 #endif
