@@ -20,6 +20,17 @@ const std::string application_name = "hello-triangle";
 
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
+const std::vector<Vertex> vertices = {
+    {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+    {{ 0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+    {{ 0.5f,  0.5f}, {0.0f, 0.0f, 1.0f}},
+    {{-0.5f,  0.5f}, {1.0f, 0.0f, 1.0f}},
+};
+
+const std::vector<uint16_t> indices = {
+    0, 1, 2, 2, 3, 0,
+};
+
 Application::Application() {
     init_glfw();
     init_vulkan();
@@ -44,6 +55,8 @@ Application::~Application() {
 
     vkDestroyBuffer(device, vertex_buffer, nullptr);
     vkFreeMemory(device, vertex_buffer_memory, nullptr);
+    vkDestroyBuffer(device, index_buffer, nullptr);
+    vkFreeMemory(device, index_buffer_memory, nullptr);
 
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; ++i) {
         vkDestroySemaphore(device, image_available_semaphores[i], nullptr);
@@ -111,6 +124,7 @@ void Application::init_vulkan() {
     create_framebuffers();
     create_command_pool();
     create_vertex_buffer();
+    create_index_buffer();
     create_command_buffers();
     create_sync_objects();
 }
@@ -705,16 +719,16 @@ void Application::create_vertex_buffer() {
     VkDeviceSize buffer_size = get_vector_data_size(vertices);
 
     VkBuffer staging_buffer;
-    VkDeviceMemory staging_buffer_memmory;
+    VkDeviceMemory staging_buffer_memory;
 
     create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
                  VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                 staging_buffer, staging_buffer_memmory);
+                 staging_buffer, staging_buffer_memory);
     
     void* data;
-    vkMapMemory(device, staging_buffer_memmory, 0, buffer_size, 0, &data);
+    vkMapMemory(device, staging_buffer_memory, 0, buffer_size, 0, &data);
         memcpy(data, vertices.data(), buffer_size);
-    vkUnmapMemory(device, staging_buffer_memmory);
+    vkUnmapMemory(device, staging_buffer_memory);
 
     create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertex_buffer, vertex_buffer_memory);
@@ -722,7 +736,31 @@ void Application::create_vertex_buffer() {
     copy_buffer(staging_buffer, vertex_buffer, buffer_size);
 
     vkDestroyBuffer(device, staging_buffer, nullptr);
-    vkFreeMemory(device, staging_buffer_memmory, nullptr);
+    vkFreeMemory(device, staging_buffer_memory, nullptr);
+}
+
+void Application::create_index_buffer() {
+    VkDeviceSize buffer_size = get_vector_data_size(indices);
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_buffer_memory;
+
+    create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                 staging_buffer, staging_buffer_memory);
+    
+    void* data;
+    vkMapMemory(device, staging_buffer_memory, 0, buffer_size, 0, &data);
+        memcpy(data, indices.data(), (size_t) buffer_size);
+    vkUnmapMemory(device, staging_buffer_memory);
+
+    create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, index_buffer, index_buffer_memory);
+
+    copy_buffer(staging_buffer, index_buffer, buffer_size);
+
+    vkDestroyBuffer(device, staging_buffer, nullptr);
+    vkFreeMemory(device, staging_buffer_memory, nullptr);
 }
 
 void Application::create_command_pool() {
@@ -812,7 +850,9 @@ void Application::record_command_buffer(VkCommandBuffer _command_buffer, uint32_
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(_command_buffer, 0, 1, vertex_buffers, offsets);
 
-    vkCmdDraw(_command_buffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+    vkCmdBindIndexBuffer(_command_buffer, index_buffer, 0, VK_INDEX_TYPE_UINT16);
+
+    vkCmdDrawIndexed(_command_buffer, static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
 
     vkCmdEndRenderPass(_command_buffer);
 

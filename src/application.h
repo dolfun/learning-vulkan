@@ -121,13 +121,16 @@ private:
     void create_framebuffers();
     std::vector<VkFramebuffer> swap_chain_framebuffers;
 
-    // Vertex buffer
+    // Buffers
     uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags);
     void create_buffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags, VkBuffer&, VkDeviceMemory&);
     void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
     void create_vertex_buffer();
+    void create_index_buffer();
     VkBuffer vertex_buffer;
     VkDeviceMemory vertex_buffer_memory;
+    VkBuffer index_buffer;
+    VkDeviceMemory index_buffer_memory;
 
     // Command pool
     void create_command_pool();
