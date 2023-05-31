@@ -204,13 +204,9 @@ void Application::create_instance() {
     // Checking availability of required extensions
     for (const auto& required_extension : required_extensions) {
         std::string required_extension_str = required_extension;
-        bool extension_found = false;
-        for (const auto& extension : available_extensions) {
-            if (required_extension_str == extension.extensionName) {
-                extension_found = true;
-                break;
-            }
-        }
+        bool extension_found = std::any_of(available_extensions.begin(), available_extensions.end(), [=] (const auto& extension) {
+            return required_extension_str == extension.extensionName;
+        });
         if (!extension_found) {
             throw std::runtime_error("Cannot find extension named " + required_extension_str + " required by glfw.");
         }
@@ -247,13 +243,9 @@ void Application::check_validation_layer_support() {
 
     for (const auto& required_validation_layer : requested_layers) {
         std::string required_validation_layer_name = required_validation_layer;
-        bool layer_found = false;
-        for (const auto& available_validation_layer : available_layers) {
-            if (required_validation_layer_name == available_validation_layer.layerName) {
-                layer_found = true;
-                break;
-            }
-        }
+        bool layer_found = std::any_of(available_layers.begin(), available_layers.end(), [=](const auto& available_validation_layer) {
+            return (required_validation_layer_name == available_validation_layer.layerName);
+        });
         if (!layer_found) {
             throw std::runtime_error("Cannot find layer named " + required_validation_layer_name + ".");
         }
@@ -298,7 +290,7 @@ void Application::select_physical_device() {
 }
 
 QueueFamilyIndices Application::find_queue_families(VkPhysicalDevice _device) {
-    QueueFamilyIndices indices;
+    QueueFamilyIndices queue_family_indices;
 
     uint32_t queue_family_count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(_device, &queue_family_count, nullptr);
@@ -308,31 +300,31 @@ QueueFamilyIndices Application::find_queue_families(VkPhysicalDevice _device) {
     int i = 0;
     for (const auto& queue_family : queue_families) {
         if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) { 
-            indices.graphics_family = i;
+            queue_family_indices.graphics_family = i;
         }
 
         VkBool32 present_support = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(_device, i, surface, &present_support);
         if (present_support) {
-            indices.present_family = i;
+            queue_family_indices.present_family = i;
         }
 
-        if (indices.is_complete()) break;
+        if (queue_family_indices.is_complete()) break;
         ++i;
     }
 
-    return indices;
+    return queue_family_indices;
 }
 
 void Application::create_logical_device() {
     // Queue families
-    QueueFamilyIndices indices = find_queue_families(physical_device);
+    QueueFamilyIndices queue_family_indices = find_queue_families(physical_device);
 
     // Device queue create info
     std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
     std::set<uint32_t> unique_queue_families = {
-        indices.graphics_family.value(),
-        indices.present_family.value(),
+        queue_family_indices.graphics_family.value(),
+        queue_family_indices.present_family.value(),
     };
 
     float queue_priority = 1.0f;
@@ -382,8 +374,8 @@ void Application::create_logical_device() {
     }
 
     // Queue handle
-    vkGetDeviceQueue(device, indices.graphics_family.value(), 0, &graphics_queue);
-    vkGetDeviceQueue(device, indices.present_family.value(), 0, &present_queue);
+    vkGetDeviceQueue(device, queue_family_indices.graphics_family.value(), 0, &graphics_queue);
+    vkGetDeviceQueue(device, queue_family_indices.present_family.value(), 0, &present_queue);
 }
 
 void Application::create_swap_chain() {
@@ -408,13 +400,16 @@ void Application::create_swap_chain() {
     create_info.imageArrayLayers = 1;
     create_info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    QueueFamilyIndices indices = find_queue_families(physical_device);
-    uint32_t queue_family_indices[] = {indices.graphics_family.value(), indices.present_family.value()};
+    QueueFamilyIndices queue_family_indices = find_queue_families(physical_device);
+    uint32_t queue_family_indices_array[] = {
+        queue_family_indices.graphics_family.value(),
+        queue_family_indices.present_family.value(),
+    };
 
-    if (indices.graphics_family != indices.present_family) {
+    if (queue_family_indices.graphics_family != queue_family_indices.present_family) {
         create_info.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         create_info.queueFamilyIndexCount = 2;
-        create_info.pQueueFamilyIndices = queue_family_indices;
+        create_info.pQueueFamilyIndices = queue_family_indices_array;
     } else {
         create_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 

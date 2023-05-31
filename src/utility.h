@@ -110,8 +110,8 @@ void print_physical_device_info(const VkPhysicalDevice& device, bool selected = 
 bool Application::is_suitable_device(VkPhysicalDevice _device) {
     bool flag = true;
 
-    auto indices = find_queue_families(_device);
-    flag &= indices.is_complete();
+    auto queue_family_indices = find_queue_families(_device);
+    flag &= queue_family_indices.is_complete();
     flag &= check_device_extension_support(_device);
 
     if (flag) {
@@ -131,14 +131,9 @@ bool Application::check_device_extension_support(VkPhysicalDevice _device) {
 
     for (auto requested_extension : required_device_extensions) {
         std::string requested_extension_str = requested_extension;
-        bool extension_found = false;
-
-        for (auto& extension : available_extesions) {
-            if (requested_extension_str == extension.extensionName) {
-                extension_found = true;
-                break;
-            }
-        }
+        bool extension_found = std::any_of(available_extesions.begin(), available_extesions.end(), [=] (const auto& extension) {
+            return (requested_extension_str == extension.extensionName);
+        });
 
         if (!extension_found) return false;
     }
@@ -148,8 +143,10 @@ bool Application::check_device_extension_support(VkPhysicalDevice _device) {
 
 void Application::sort_physical_devices(std::vector<VkPhysicalDevice>& devices) {
     std::sort(devices.begin(), devices.end(), [this] (const VkPhysicalDevice& deviceA, const VkPhysicalDevice& deviceB) {
-        if (is_suitable_device(deviceA) != is_suitable_device(deviceB)) {
-            return is_suitable_device(deviceA) > is_suitable_device(deviceB);
+        bool is_deviceA_suitable = is_suitable_device(deviceA);
+        bool is_deviceB_suitable = is_suitable_device(deviceB);
+        if (is_deviceA_suitable != is_deviceB_suitable) {
+            return is_deviceA_suitable;
         }
 
         VkPhysicalDeviceProperties deviceA_properties, deviceB_properties;
@@ -159,7 +156,7 @@ void Application::sort_physical_devices(std::vector<VkPhysicalDevice>& devices) 
         bool is_deviceA_preferred = (deviceA_properties.deviceType == PREFERRED_DEVICE_TYPE);
         bool is_deviceB_preferred = (deviceB_properties.deviceType == PREFERRED_DEVICE_TYPE);
         if (is_deviceA_preferred != is_deviceB_preferred) {
-            return is_deviceA_preferred > is_deviceB_preferred;
+            return is_deviceA_preferred;
         }
 
         auto deviceA_vram_size = get_device_dedicated_vram_size(deviceA);
@@ -191,21 +188,18 @@ SwapChainSupportDetails Application::query_swap_chain_support(VkPhysicalDevice _
 }
 
 VkSurfaceFormatKHR Application::choose_swap_surface_format(const std::vector<VkSurfaceFormatKHR>& formats) {
-    for (const auto& format : formats) {
-        if (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-            return format;
-        }
-    }
+    auto it = std::find_if(formats.begin(), formats.end(), [] (const auto& format) {
+        return (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR);
+    });
+    if (it != formats.end()) return *it;
     return formats.front();
 }
 
 VkPresentModeKHR Application::choose_swap_present_mode(const std::vector<VkPresentModeKHR>& present_modes) {
-    for (const auto& present_mode : present_modes) {
-        if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR) {
-            return present_mode;
-        }
-    }
-
+    auto it = std::find_if(present_modes.begin(), present_modes.end(), [] (const auto& present_mode) {
+        return (present_mode == VK_PRESENT_MODE_MAILBOX_KHR);
+    });
+    if (it != present_modes.end()) return *it;
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
