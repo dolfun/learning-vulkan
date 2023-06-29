@@ -10,6 +10,7 @@
 #include <chrono>
 #include <vector>
 #include <set>
+#include <cstring>
 
 constexpr uint32_t window_width = 800;
 constexpr uint32_t window_height = 600;
@@ -759,7 +760,7 @@ void Application::create_vertex_buffer() {
     
     void* data;
     vkMapMemory(device, staging_buffer_memory, 0, buffer_size, 0, &data);
-        memcpy(data, vertices.data(), buffer_size);
+        std::memcpy(data, vertices.data(), buffer_size);
     vkUnmapMemory(device, staging_buffer_memory);
 
     create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
@@ -783,7 +784,7 @@ void Application::create_index_buffer() {
     
     void* data;
     vkMapMemory(device, staging_buffer_memory, 0, buffer_size, 0, &data);
-        memcpy(data, indices.data(), (size_t) buffer_size);
+        std::memcpy(data, indices.data(), (size_t) buffer_size);
     vkUnmapMemory(device, staging_buffer_memory);
 
     create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -1027,5 +1028,5 @@ void Application::update_uniform_buffer(uint32_t _current_image) {
     ubo.projection = glm::perspective(glm::radians(60.0f), swap_chain_extent.width / (float) swap_chain_extent.height, 0.1f, 10.0f);
     ubo.projection[1][1] *= -1;
 
-    memcpy(uniform_buffers_pointers[_current_image], &ubo, sizeof(ubo));
+    std::memcpy(uniform_buffers_pointers[_current_image], &ubo, sizeof(ubo));
 }
