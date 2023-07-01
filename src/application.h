@@ -128,7 +128,7 @@ private:
     // Buffers
     uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags);
     void create_buffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags, VkBuffer&, VkDeviceMemory&);
-    void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize size);
+    void copy_buffer(VkBuffer src_buffer, VkBuffer dst_buffer, VkDeviceSize);
     void create_vertex_buffer();
     void create_index_buffer();
     void create_uniform_buffers();
@@ -139,6 +139,16 @@ private:
     std::vector<VkBuffer> uniform_buffers;
     std::vector<VkDeviceMemory> uniform_buffers_memory;
     std::vector<void*> uniform_buffers_pointers;
+
+    // Images
+    void create_image(uint32_t width, uint32_t height, 
+                     VkFormat, VkImageTiling, VkImageUsageFlags, 
+                     VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
+    void create_texture_image();
+    void transition_image_layout(VkImage, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
+    void copy_buffer_to_image(VkBuffer, VkImage, uint32_t width, uint32_t height);
+    VkImage texture_image;
+    VkDeviceMemory texture_image_memory;
 
     // Decriptor pool
     void create_descriptor_pool();
@@ -155,6 +165,8 @@ private:
     // Command buffer
     void create_command_buffers();
     void record_command_buffer(VkCommandBuffer, uint32_t image_index);
+    VkCommandBuffer begin_single_time_commands();
+    void end_single_time_commands(VkCommandBuffer);
     std::vector<VkCommandBuffer> command_buffers;
 
     // Synchronization objects
