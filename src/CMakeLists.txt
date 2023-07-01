@@ -2,6 +2,7 @@ add_executable(main)
 target_sources(main PRIVATE
     main.cc
     application.h application.cc
+    stb_image_implementation.cc
     debug_messenger.h
 	utility.h
 )
