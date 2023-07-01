@@ -140,15 +140,20 @@ private:
     std::vector<VkDeviceMemory> uniform_buffers_memory;
     std::vector<void*> uniform_buffers_pointers;
 
-    // Images
+    // Textrue image
     void create_image(uint32_t width, uint32_t height, 
                      VkFormat, VkImageTiling, VkImageUsageFlags, 
                      VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
+    VkImageView create_image_view(VkImage, VkFormat);
     void create_texture_image();
+    void create_texture_image_view();
+    void create_texture_sampler();
     void transition_image_layout(VkImage, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
     void copy_buffer_to_image(VkBuffer, VkImage, uint32_t width, uint32_t height);
     VkImage texture_image;
     VkDeviceMemory texture_image_memory;
+    VkImageView texture_image_view;
+    VkSampler texture_sampler;
 
     // Decriptor pool
     void create_descriptor_pool();

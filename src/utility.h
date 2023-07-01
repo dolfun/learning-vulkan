@@ -16,6 +16,7 @@
 struct Vertex {
     glm::vec2 pos;
     glm::vec3 color;
+    glm::vec2 tex_coord;
 
     static auto get_binding_description() {
         VkVertexInputBindingDescription binding_description{};
@@ -27,7 +28,7 @@ struct Vertex {
     }
 
     static auto get_attribute_description() {
-        std::array<VkVertexInputAttributeDescription, 2> attribute_descriptions;
+        std::array<VkVertexInputAttributeDescription, 3> attribute_descriptions;
 
         attribute_descriptions[0].binding = 0;
         attribute_descriptions[0].location = 0;
@@ -38,6 +39,11 @@ struct Vertex {
         attribute_descriptions[1].location = 1;
         attribute_descriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
         attribute_descriptions[1].offset = offsetof(Vertex, color);
+
+        attribute_descriptions[2].binding = 0;
+        attribute_descriptions[2].location = 2;
+        attribute_descriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+        attribute_descriptions[2].offset = offsetof(Vertex, tex_coord);
 
         return attribute_descriptions;
     }
@@ -119,6 +125,10 @@ bool Application::is_suitable_device(VkPhysicalDevice _device) {
         flag &= !swap_chain_support_details.formats.empty();
         flag &= !swap_chain_support_details.present_modes.empty();
     }
+
+    VkPhysicalDeviceFeatures supported_features;
+    vkGetPhysicalDeviceFeatures(_device, &supported_features);
+    flag &= supported_features.samplerAnisotropy;
 
     return flag;
 }
