@@ -5,7 +5,8 @@ target_sources(main PRIVATE
     debug_messenger.h
 	utility.h
 )
-target_link_libraries(main PRIVATE glfw Vulkan::Vulkan)
+target_include_directories(main PRIVATE ${Stb_INCLUDE_DIR})
+target_link_libraries(main PRIVATE glfw glm::glm Vulkan::Vulkan)
 target_compile_features(main PRIVATE cxx_std_20)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
