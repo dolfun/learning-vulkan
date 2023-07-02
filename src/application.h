@@ -144,7 +144,7 @@ private:
     void create_image(uint32_t width, uint32_t height, 
                      VkFormat, VkImageTiling, VkImageUsageFlags, 
                      VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
-    VkImageView create_image_view(VkImage, VkFormat);
+    VkImageView create_image_view(VkImage, VkFormat, VkImageAspectFlags);
     void create_texture_image();
     void create_texture_image_view();
     void create_texture_sampler();
@@ -154,6 +154,14 @@ private:
     VkDeviceMemory texture_image_memory;
     VkImageView texture_image_view;
     VkSampler texture_sampler;
+
+    // Depth buffer
+    void create_depth_resource();
+    VkFormat find_supported_format(const std::vector<VkFormat>&, VkImageTiling, VkFormatFeatureFlags);
+    VkFormat find_depth_format();
+    VkImage depth_image;
+    VkDeviceMemory depth_image_memory;
+    VkImageView depth_image_view;
 
     // Decriptor pool
     void create_descriptor_pool();
