@@ -14,3 +14,13 @@ configure_file(
     ${CMAKE_CURRENT_BINARY_DIR}/resources/texture.jpg
     COPYONLY
 )
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources/viking_room.obj
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/viking_room.obj
+    COPYONLY
+)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources/viking_room.png
+    ${CMAKE_CURRENT_BINARY_DIR}/resources/viking_room.png
+    COPYONLY
+)
