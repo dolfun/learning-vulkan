@@ -4,6 +4,7 @@ project(learning-vulkan VERSION 1.0)
 find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
 find_package(Stb REQUIRED)
+find_package(tinyobjloader CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
 
 add_subdirectory(src)

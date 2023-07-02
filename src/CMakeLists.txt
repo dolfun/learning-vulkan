@@ -3,6 +3,7 @@ target_sources(main PRIVATE
     main.cc
     application.h application.cc
     stb_image_implementation.cc
+    tiny_obj_loader_implementation.cc
     debug_messenger.h
 	utility.h
 )
