@@ -335,7 +335,7 @@ void Application::select_physical_device() {
 
     physical_device = devices.front();
     msaa_samples = get_max_usable_sample_count();
-    msaa_samples = VK_SAMPLE_COUNT_1_BIT;
+    // msaa_samples = VK_SAMPLE_COUNT_1_BIT;
 }
 
 QueueFamilyIndices Application::find_queue_families(VkPhysicalDevice _device) {
@@ -536,23 +536,33 @@ void Application::create_image_views() {
 void Application::create_render_pass() {
     VkAttachmentDescription color_attachment{};
     color_attachment.format = swap_chain_image_format;
-    color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    color_attachment.samples = msaa_samples;
     color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    color_attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription depth_attachment{};
     depth_attachment.format = find_depth_format();
-    depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depth_attachment.samples = msaa_samples;
     depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentDescription color_attachment_resolve{};
+    color_attachment_resolve.format = swap_chain_image_format;
+    color_attachment_resolve.samples = VK_SAMPLE_COUNT_1_BIT;
+    color_attachment_resolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment_resolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attachment_resolve.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment_resolve.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    color_attachment_resolve.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    color_attachment_resolve.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentReference color_attachment_reference{};
     color_attachment_reference.attachment = 0;
@@ -562,11 +572,16 @@ void Application::create_render_pass() {
     depth_attachment_reference.attachment = 1;
     depth_attachment_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+    VkAttachmentReference color_attachment_resolve_reference{};
+    color_attachment_resolve_reference.attachment = 2;
+    color_attachment_resolve_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
     VkSubpassDescription subpass_description{};
     subpass_description.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass_description.colorAttachmentCount = 1;
     subpass_description.pColorAttachments = &color_attachment_reference;
     subpass_description.pDepthStencilAttachment = &depth_attachment_reference;
+    subpass_description.pResolveAttachments = &color_attachment_resolve_reference;
 
     VkSubpassDependency subpass_dependency{};
     subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -576,7 +591,7 @@ void Application::create_render_pass() {
     subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-    std::array<VkAttachmentDescription, 2> attachments = {color_attachment, depth_attachment};
+    std::array<VkAttachmentDescription, 3> attachments = {color_attachment, depth_attachment, color_attachment_resolve};
     VkRenderPassCreateInfo render_pass_create_info{};
     render_pass_create_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     render_pass_create_info.attachmentCount = static_cast<uint32_t>(attachments.size());
@@ -676,7 +691,7 @@ void Application::create_graphics_pipeline() {
     VkPipelineMultisampleStateCreateInfo multisample_create_info{};
     multisample_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisample_create_info.sampleShadingEnable = VK_FALSE;
-    multisample_create_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisample_create_info.rasterizationSamples = msaa_samples;
 
     VkPipelineColorBlendAttachmentState color_blend_attachment{};
     color_blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
@@ -751,9 +766,10 @@ void Application::create_framebuffers() {
     swap_chain_framebuffers.resize(swap_chain_image_views.size());
 
     for (size_t i = 0; i < swap_chain_image_views.size(); ++i) {
-        std::array<VkImageView, 2> attachments = {
-            swap_chain_image_views[i],
+        std::array<VkImageView, 3> attachments = {
+            color_image_view,
             depth_image_view,
+            swap_chain_image_views[i],
         };
 
         VkFramebufferCreateInfo create_info{};
@@ -932,8 +948,6 @@ VkImageView Application::create_image_view(VkImage image, VkFormat format, VkIma
 }
 
 void Application::transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t _mip_levels) {
-    (void)format;
-
     auto command_buffer = begin_single_time_commands();
 
     VkImageMemoryBarrier barrier{};
