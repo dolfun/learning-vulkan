@@ -148,19 +148,29 @@ private:
     std::vector<void*> uniform_buffers_pointers;
 
     // Texture image
-    void create_image(uint32_t width, uint32_t height, 
+    void create_image(uint32_t width, uint32_t height, uint32_t _mip_levels, VkSampleCountFlagBits nr_samples,
                      VkFormat, VkImageTiling, VkImageUsageFlags, 
                      VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
-    VkImageView create_image_view(VkImage, VkFormat, VkImageAspectFlags);
+    VkImageView create_image_view(VkImage, VkFormat, VkImageAspectFlags, uint32_t _mip_levels);
+    void transition_image_layout(VkImage, VkFormat, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t _mip_levels);
+    void generate_mipmaps(VkImage, VkFormat, int32_t texture_width, int32_t texture_height, uint32_t _mip_levels);
     void create_texture_image();
     void create_texture_image_view();
     void create_texture_sampler();
-    void transition_image_layout(VkImage, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout);
     void copy_buffer_to_image(VkBuffer, VkImage, uint32_t width, uint32_t height);
     VkImage texture_image;
+    uint32_t mip_levels;
     VkDeviceMemory texture_image_memory;
     VkImageView texture_image_view;
     VkSampler texture_sampler;
+
+    // Multisampling
+    VkSampleCountFlagBits get_max_usable_sample_count();
+    void create_color_resource();
+    VkSampleCountFlagBits msaa_samples = VK_SAMPLE_COUNT_1_BIT;
+    VkImage color_image;
+    VkDeviceMemory color_image_memory;
+    VkImageView color_image_view;
 
     // Depth buffer
     void create_depth_resource();
