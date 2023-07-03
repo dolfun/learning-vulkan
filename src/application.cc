@@ -9,7 +9,10 @@
 
 #include <stb_image.h>
 
+#include <tiny_obj_loader.h>
+
 #include <iostream>
+#include <unordered_map>
 #include <chrono>
 #include <vector>
 #include <set>
@@ -18,6 +21,8 @@
 constexpr uint32_t window_width = 800;
 constexpr uint32_t window_height = 600;
 const std::string application_name = "hello-triangle";
+const std::string model_path = "resources/viking_room.obj";
+const std::string texture_path = "resources/viking_room.png";
 
 #ifdef NDEBUG
     constexpr bool enable_validation_layers = false;
@@ -27,25 +32,9 @@ const std::string application_name = "hello-triangle";
 
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
-const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f,  0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{ 0.5f, -0.5f,  0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{ 0.5f,  0.5f,  0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f,  0.5f,  0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{ 0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{ 0.5f,  0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f,  0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
-};
-
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4,
-};
-
 Application::Application() {
     init_glfw();
+    load_model();
     init_vulkan();
 }
 
@@ -142,6 +131,44 @@ void Application::framebuffer_resize_callback(GLFWwindow* window, int width, int
     app->framebuffer_resized = true;
     (void)width;
     (void)height;
+}
+
+void Application::load_model() {
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warning, error;
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warning, &error, model_path.c_str())) {
+        throw std::runtime_error(warning + error);
+    }
+
+    std::unordered_map<Vertex, uint32_t> unique_vertices{};
+
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            Vertex vertex{};
+
+            vertex.pos = {
+                attrib.vertices[3 * index.vertex_index + 0],
+                attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 2],
+            };
+
+            vertex.tex_coord = {
+                attrib.texcoords[2 * index.texcoord_index + 0],
+                1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+            };
+
+            vertex.color = {1.0f, 1.0f, 1.0f};
+
+            if (unique_vertices.find(vertex) == unique_vertices.end()) {
+                unique_vertices[vertex] = static_cast<uint32_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+
+            indices.push_back(unique_vertices[vertex]);
+        }
+    }
 }
 
 void Application::init_vulkan() {
@@ -898,7 +925,7 @@ VkImageView Application::create_image_view(VkImage image, VkFormat format, VkIma
 
 void Application::create_texture_image() {
     int texture_width, texture_height, texture_nr_channels;
-    stbi_uc* pixels = stbi_load("resources/texture.jpg", 
+    stbi_uc* pixels = stbi_load(texture_path.c_str(), 
                                 &texture_width, &texture_height, &texture_nr_channels, 
                                 STBI_rgb_alpha);
 
@@ -1228,7 +1255,7 @@ void Application::record_command_buffer(VkCommandBuffer _command_buffer, uint32_
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(_command_buffer, 0, 1, vertex_buffers, offsets);
 
-    vkCmdBindIndexBuffer(_command_buffer, index_buffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindIndexBuffer(_command_buffer, index_buffer, 0, VK_INDEX_TYPE_UINT32);
 
     vkCmdBindDescriptorSets(_command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout,
                              0, 1, &descriptor_sets[current_frame], 0, nullptr);

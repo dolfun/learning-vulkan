@@ -8,6 +8,8 @@
 #include <array>
 #include <optional>
 
+struct Vertex;
+
 const std::vector<const char*> requested_layers = {
     "VK_LAYER_KHRONOS_validation",
 };
@@ -125,6 +127,11 @@ private:
     void create_framebuffers();
     std::vector<VkFramebuffer> swap_chain_framebuffers;
 
+    // Model data
+    void load_model();
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+
     // Buffers
     uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags);
     void create_buffer(VkDeviceSize, VkBufferUsageFlags, VkMemoryPropertyFlags, VkBuffer&, VkDeviceMemory&);
@@ -140,7 +147,7 @@ private:
     std::vector<VkDeviceMemory> uniform_buffers_memory;
     std::vector<void*> uniform_buffers_pointers;
 
-    // Textrue image
+    // Texture image
     void create_image(uint32_t width, uint32_t height, 
                      VkFormat, VkImageTiling, VkImageUsageFlags, 
                      VkMemoryPropertyFlags, VkImage&, VkDeviceMemory&);
