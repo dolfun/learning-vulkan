@@ -8,6 +8,6 @@ layout(binding = 1) uniform sampler2D tex_sampler;
 
 void main() {
     vec3 color = texture(tex_sampler, frag_tex_coord).rgb;
-    color = pow(color, vec3(1.0 / 2.2));
+    // color = pow(color, vec3(1.0 / 2.2));
     out_color = vec4(color, 1.0);
 } 
