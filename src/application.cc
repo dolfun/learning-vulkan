@@ -390,6 +390,7 @@ void Application::create_logical_device() {
     // Physical device features
     VkPhysicalDeviceFeatures device_features{};
     device_features.samplerAnisotropy = VK_TRUE;
+    device_features.sampleRateShading = VK_TRUE;
 
     // Device create info
     VkDeviceCreateInfo create_info{};
@@ -690,7 +691,8 @@ void Application::create_graphics_pipeline() {
 
     VkPipelineMultisampleStateCreateInfo multisample_create_info{};
     multisample_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    multisample_create_info.sampleShadingEnable = VK_FALSE;
+    multisample_create_info.sampleShadingEnable = VK_TRUE;
+    multisample_create_info.minSampleShading = 0.2f;
     multisample_create_info.rasterizationSamples = msaa_samples;
 
     VkPipelineColorBlendAttachmentState color_blend_attachment{};
