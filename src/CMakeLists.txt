@@ -7,7 +7,7 @@ target_sources(main PRIVATE
     debug_messenger.h
 	utility.h
 )
-target_include_directories(main PRIVATE STB_INCLUDE_DIR TINYOBJLOADER_INCLUDE_DIR)
+target_include_directories(main PRIVATE ${STB_INCLUDE_DIR})
 target_link_libraries(main PRIVATE glfw Vulkan::Vulkan)
 target_compile_features(main PRIVATE cxx_std_20)
 
