@@ -14,7 +14,7 @@ if (NOT glm_FOUND)
     endif()
 endif()
 
-find_package(Stb)
+find_package(Stb QUIET)
 set(Stb_INCLUDE_DIR_PRESENT FALSE)
 if (NOT Stb_FOUND)
     CHECK_INCLUDE_FILE_CXX(stb_image.h stb_image_h_FOUND)
