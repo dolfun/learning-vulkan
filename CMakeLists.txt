@@ -1,11 +1,34 @@
 cmake_minimum_required(VERSION 3.24.0)
 project(learning-vulkan VERSION 1.0)
 
-find_package(glm REQUIRED)
+include(CheckIncludeFileCXX)
+
 find_package(glfw3 REQUIRED)
-find_package(Stb REQUIRED)
-find_package(tinyobjloader CONFIG REQUIRED)
 find_package(Vulkan REQUIRED)
+
+find_package(glm)
+if (NOT glm_FOUND)
+    CHECK_INCLUDE_FILE_CXX(glm/glm.hpp glm_hpp_FOUND)
+    if (NOT glm_hpp_FOUND)
+        message(FATAL_ERROR "Cannot find glm/glm.hpp")
+    endif()
+endif()
+
+find_package(Stb)
+if (NOT Stb_FOUND)
+    CHECK_INCLUDE_FILE_CXX(stb_image.h stb_image_h_FOUND)
+    if (NOT stb_image_h_FOUND)
+        message(FATAL_ERROR "Cannot find stb_image.h")
+    endif()
+endif()
+
+find_package(tinyobjloader CONFIG)
+if (NOT tinyobjloader_FOUND)
+    CHECK_INCLUDE_FILE_CXX(tiny_obj_loader.h tiny_obj_loader_h_FOUND)
+    if (NOT tiny_obj_loader_h_FOUND)
+        message(FATAL_ERROR "Cannot find tiny_obj_loader.h")
+    endif()
+endif()
 
 add_subdirectory(src)
 
