@@ -145,7 +145,7 @@ bool Application::is_suitable_device(VkPhysicalDevice _device) {
 
     VkPhysicalDeviceFeatures supported_features;
     vkGetPhysicalDeviceFeatures(_device, &supported_features);
-    flag &= supported_features.samplerAnisotropy;
+    flag &= static_cast<bool>(supported_features.samplerAnisotropy);
 
     return flag;
 }
