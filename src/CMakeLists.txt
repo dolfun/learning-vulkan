@@ -7,6 +7,9 @@ target_sources(main PRIVATE
     debug_messenger.h
 	utility.h
 )
+if (Stb_INCLUDE_DIR_PRESENT)
+    target_include_directories(main PRIVATE stb)
+endif()
 target_link_libraries(main PRIVATE glfw Vulkan::Vulkan)
 target_compile_features(main PRIVATE cxx_std_20)
 
