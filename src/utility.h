@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <limits>
+#include <array>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
